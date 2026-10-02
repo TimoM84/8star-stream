@@ -378,6 +378,10 @@ body.has-bg {
   background: linear-gradient(transparent, rgba(0, 0, 0, 0.78));
   color: #fff;
   transition: opacity 0.2s;
+  pointer-events: none;
+}
+.w-ctl > * {
+  pointer-events: auto;
 }
 .w-player.idle .w-ctl {
   opacity: 0;
@@ -514,7 +518,7 @@ body.has-bg {
 }
 .w-big-play {
   position: absolute;
-  z-index: 3;
+  z-index: 5;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
@@ -602,6 +606,15 @@ body.has-bg {
   border-radius: 0;
 }
 @media (max-width: 560px) {
+  .w-big-play {
+    width: 56px;
+    height: 56px;
+    top: 40%;
+  }
+  .w-big-play svg {
+    width: 32px;
+    height: 32px;
+  }
   .w-volume {
     display: none;
   }

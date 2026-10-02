@@ -8,15 +8,15 @@ let t, admin;
 test.before(async () => {
   t = await start();
   admin = t.client();
-  assert.equal((await admin.login("admin@nfgd.test", "admin-password-1")).status, 200);
+  assert.equal((await admin.login("admin@example.test", "admin-password-1")).status, 200);
 });
 test.after(() => t.stop());
 
 test("sign-in: wrong password, missing CSRF token and cross-site requests are refused", async () => {
   const c = t.client();
-  assert.equal((await c.login("admin@nfgd.test", "wrong-password")).status, 401);
+  assert.equal((await c.login("admin@example.test", "wrong-password")).status, 401);
   // A session without the CSRF token cannot change anything.
-  const ok = await c.login("admin@nfgd.test", "admin-password-1");
+  const ok = await c.login("admin@example.test", "admin-password-1");
   assert.equal(ok.status, 200);
   const res = await fetch(t.base + "/api/admin/tenants", {
     method: "POST",
@@ -28,8 +28,8 @@ test("sign-in: wrong password, missing CSRF token and cross-site requests are re
   assert.equal(cross.status, 403);
   // Locked out after 10 failures from the same address.
   const d = t.client();
-  for (let i = 0; i < 10; i++) await d.login("nobody@nfgd.test", "nope-nope-nope");
-  assert.equal((await d.login("nobody@nfgd.test", "nope-nope-nope")).status, 429);
+  for (let i = 0; i < 10; i++) await d.login("nobody@example.test", "nope-nope-nope");
+  assert.equal((await d.login("nobody@example.test", "nope-nope-nope")).status, 429);
 });
 
 test("roles: technician and content manager only get their own functions", async () => {
@@ -41,14 +41,14 @@ test("roles: technician and content manager only get their own functions", async
     config: { ingestUrl: "rtmp://in/live", streamKey: "very-secret", playbackUrl: "https://cdn.test/a.m3u8" },
   });
   for (const [email, role] of [
-    ["tech@nfgd.test", "technician"],
-    ["content@nfgd.test", "content"],
+    ["tech@example.test", "technician"],
+    ["content@example.test", "content"],
   ])
     assert.equal((await admin.post("/api/admin/users", { email, role, password: "password-1234" })).status, 200);
   const tech = t.client(),
     content = t.client();
-  await tech.login("tech@nfgd.test", "password-1234");
-  await content.login("content@nfgd.test", "password-1234");
+  await tech.login("tech@example.test", "password-1234");
+  await content.login("content@example.test", "password-1234");
 
   // Technician: streams and live yes, page/forms/users no.
   assert.equal((await tech.get("/api/admin/events/" + ev.event.id + "/live")).status, 200);
@@ -74,7 +74,7 @@ test("roles: technician and content manager only get their own functions", async
 
   // Disabling a user ends their session at once.
   const users = (await admin.get("/api/admin/users")).data;
-  await admin.patch("/api/admin/users/" + users.find((u) => u.email === "tech@nfgd.test").id, { active: false });
+  await admin.patch("/api/admin/users/" + users.find((u) => u.email === "tech@example.test").id, { active: false });
   assert.equal((await tech.get("/api/admin/events")).status, 401);
 });
 
@@ -102,7 +102,7 @@ test("resellers only see their own environment", async () => {
   const ev = (await r.post("/api/admin/events", { title: "Reseller event", customerId: own.id })).data;
   assert.equal(ev.event.tenantId, reseller.id);
   assert.match(ev.event.reference, /^RESELL-\d{4}-0001$/);
-  // Reseller sees only its own users and audit lines; NFGD sees both.
+  // Reseller sees only its own users and audit lines; the platform sees both.
   const users = (await r.get("/api/admin/users")).data;
   assert.ok(users.every((u) => u.tenantId === reseller.id));
   const audit = (await r.get("/api/admin/audit")).data;

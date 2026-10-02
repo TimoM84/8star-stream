@@ -21,7 +21,7 @@ public/watch.html    watch page (watch.js, hls.js from public/vendor)
 
 ## Data
 
-- `tenants` — the platform (NFGD) and reseller environments. Every customer, user, event, media item and template belongs to one; every admin query goes through `canSee`/`scope`, and records outside the user's environment answer 404.
+- `tenants` — the platform and reseller environments. Every customer, user, event, media item and template belongs to one; every admin query goes through `canSee`/`scope`, and records outside the user's environment answer 404.
 - `events` → `sessions`, `languages`; `variants` per session × language (active route, pre/after media, VOD); `routes` per session × language × slot (primary/backup).
 - `pages` per event × phase × language with draft and published HTML.
 - `forms` per event; `registrations` keep a copy of the fields they were made with, so they stay readable when the form changes.

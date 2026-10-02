@@ -9,7 +9,7 @@ const { createApp } = require("../src/app");
 async function start(config = {}) {
   const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), "8star-stream-test-"));
   const app = await createApp({
-    env: { ADMIN_EMAIL: "admin@nfgd.test", ADMIN_PASSWORD: "admin-password-1", DATA_DIR: dataDir, MONITOR: "false" },
+    env: { ADMIN_EMAIL: "admin@example.test", ADMIN_PASSWORD: "admin-password-1", DATA_DIR: dataDir, MONITOR: "false" },
     config: { dataDir, monitor: false, ...config },
   });
   const port = await app.listen(0, "127.0.0.1");

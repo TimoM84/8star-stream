@@ -10,7 +10,7 @@ let t, admin;
 test.before(async () => {
   t = await start({ frameAncestors: "https://www.klant.nl" });
   admin = t.client();
-  await admin.login("admin@nfgd.test", "admin-password-1");
+  await admin.login("admin@example.test", "admin-password-1");
 });
 test.after(() => t.stop());
 

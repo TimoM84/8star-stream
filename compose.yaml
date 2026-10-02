@@ -20,7 +20,7 @@ services:
       # First start only: the first platform administrator.
       ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@example.com}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
-      PLATFORM_NAME: ${PLATFORM_NAME:-NFGD}
+      PLATFORM_NAME: ${PLATFORM_NAME:-8star}
       # Public address used in watch links and embed codes, e.g.
       # https://live.example.com (empty: taken from the request).
       PUBLIC_URL: ${PUBLIC_URL:-}

@@ -11,7 +11,7 @@ const state = (c, q = "") => c.get("/api/watch/" + ev.event.slug + "/state" + q)
 test.before(async () => {
   t = await start();
   admin = t.client();
-  await admin.login("admin@nfgd.test", "admin-password-1");
+  await admin.login("admin@example.test", "admin-password-1");
   ev = (await admin.post("/api/admin/events", { title: "Kijk test", startAt: new Date(Date.now() - 3600e3).toISOString(), endAt: new Date(Date.now() + 3600e3).toISOString() })).data;
   nl = ev.languages[0].id;
   sess = ev.sessions[0].id;

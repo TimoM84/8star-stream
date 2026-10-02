@@ -2,12 +2,12 @@
 // Staff sign-in, sessions, roles and environment (tenant) scoping.
 //
 // Roles:
-//   admin       platform administrator (NFGD environment) or reseller
+//   admin       platform administrator (platform environment) or reseller
 //               administrator (reseller environment)
 //   technician  streams, Green Room, live control and phases
 //   content     watch page, templates, media, registration forms,
 //               registrations and VOD
-// NFGD (the platform environment) sees every environment; a reseller only
+// the platform environment sees every environment; a reseller only
 // its own. Every lookup of a tenant-owned record goes through canSee().
 const { token, verifySecret, sha256 } = require("./util");
 const { fail, cookies, cookie } = require("./http");
@@ -124,7 +124,7 @@ function need(user, permission) {
   if (!user) fail(401, "Please sign in.");
   if (permission && !can(user, permission)) fail(403, "You do not have permission for this action.");
 }
-// NFGD sees all environments; a reseller only its own.
+// The platform sees all environments; a reseller only its own.
 const canSee = (user, tenantId) => Boolean(user && (user.platform || user.tenantId === tenantId));
 // SQL fragment + parameter limiting a query to the user's environment.
 const scope = (user, column = "tenant_id") =>

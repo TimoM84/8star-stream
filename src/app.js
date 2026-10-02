@@ -23,7 +23,7 @@ function config(env = process.env) {
     dataDir: env.DATA_DIR || path.join(__dirname, "..", "data"),
     adminEmail: String(env.ADMIN_EMAIL || "admin@example.com").trim().toLowerCase(),
     adminPassword: env.ADMIN_PASSWORD || "",
-    platformName: String(env.PLATFORM_NAME || "NFGD").trim() || "NFGD",
+    platformName: String(env.PLATFORM_NAME || "8star").trim() || "8star",
     publicUrl: String(env.PUBLIC_URL || "").replace(/\/+$/, ""),
     trustProxy: bool(env.TRUST_PROXY, false),
     cookieSecure: String(env.COOKIE_SECURE || "auto").toLowerCase(),

@@ -6,7 +6,7 @@ Provider-agnostic: any encoder and streaming service that delivers HLS works (Wo
 
 Built with Node.js. No external database: everything is stored in one Docker volume (SQLite).
 
-![Watch page during the live phase, with language choice and two rooms](docs/screenshots/watch-live.png)
+![Watch page during the live phase, with the language menu in the player](docs/screenshots/watch-live.png)
 
 ## Features
 
@@ -40,6 +40,8 @@ Built with Node.js. No external database: everything is stored in one Docker vol
 | ![Watch page editor with variables](docs/screenshots/page-editor.png)     | ![Registration form builder](docs/screenshots/registration-form.png)   |
 | **Dashboard**                                                              | **Usage**                                                              |
 | ![Dashboard](docs/screenshots/dashboard.png)                               | ![Usage per event, session, language and route](docs/screenshots/usage.png) |
+| **Player with subtitles and language menu**                                | **Player on a phone**                                                  |
+| ![Player with subtitle choice](docs/screenshots/player-subtitles.png)      | ![Player on a phone with English subtitles](docs/screenshots/player-mobile.png) |
 
 _All names and events in the screenshots are fictional; the video is a generated test signal._
 
@@ -60,7 +62,7 @@ services:
     environment:
       ADMIN_EMAIL: admin@example.com
       ADMIN_PASSWORD: choose-a-long-password
-      PLATFORM_NAME: NFGD
+      PLATFORM_NAME: 8star
       TRUST_PROXY: "true"
     volumes:
       - 8star_stream_data:/data
@@ -96,7 +98,7 @@ The named volume keeps all data when the container is rebuilt. Never remove the 
 | ----------------- | ------------------ | ------------------------------------------------------------------------------------------------------------ |
 | `ADMIN_EMAIL`     | `admin@example.com`| First platform administrator (first start only)                                                              |
 | `ADMIN_PASSWORD`  | —                  | Password of that administrator, at least 12 characters (first start only)                                    |
-| `PLATFORM_NAME`   | `NFGD`             | Name of the platform environment; also the prefix of project references (`NFGD-2026-0001`)                   |
+| `PLATFORM_NAME`   | `8star`            | Name of the platform environment; also the prefix of project references (`8STAR-2026-0001`)                   |
 | `PUBLIC_URL`      | from the request   | Public address used in watch links and embed codes, e.g. `https://live.example.com`                          |
 | `TRUST_PROXY`     | `false`            | `true` behind a reverse proxy (Nginx Proxy Manager): use `X-Forwarded-*` for address, host and HTTPS          |
 | `COOKIE_SECURE`   | `auto`             | `auto` sets the Secure flag on HTTPS; `true`/`false` to force                                                |

@@ -50,7 +50,7 @@ test("usage: live minutes only for the active route of a public live session; te
   const t = await start();
   try {
     const admin = t.client();
-    await admin.login("admin@nfgd.test", "admin-password-1");
+    await admin.login("admin@example.test", "admin-password-1");
     let ev = (await admin.post("/api/admin/events", {
       title: "Gebruik",
       startAt: new Date(Date.now() - 3600e3).toISOString(),
@@ -103,7 +103,7 @@ test("usage: live minutes only for the active route of a public live session; te
     assert.equal(usage.events[0].plays, 2);
     const xlsx = await admin.get("/api/admin/usage/export?format=xlsx&event=" + ev.event.id);
     assert.equal(xlsx.status, 200);
-    assert.match(xlsx.headers.get("content-disposition"), /GEBRUIK|NFGD-\d{4}-0001_\d{4}-\d{2}-\d{2}_\d{4}-\d{2}-\d{2}\.xlsx/);
+    assert.match(xlsx.headers.get("content-disposition"), /GEBRUIK|8STAR-\d{4}-0001_\d{4}-\d{2}-\d{2}_\d{4}-\d{2}-\d{2}\.xlsx/);
 
     // Signal loss of the active route raises the alarm in live control.
     playlists["/a.m3u8"] = media(2, true);
