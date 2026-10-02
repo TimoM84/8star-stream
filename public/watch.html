@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Livestream</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="/content.css" />
+    <link rel="stylesheet" href="/watch.css" />
+  </head>
+  <body>
+    <div class="w-page">
+      <header id="head" class="w-head"></header>
+      <div id="notes"></div>
+      <div id="sessions"></div>
+      <main class="w-main">
+        <div class="w-stagecol">
+          <div id="stage" class="w-stage"><div class="w-placeholder"><p class="w-big">…</p></div></div>
+          <div id="chapters" class="w-chapters"></div>
+        </div>
+        <aside id="chat" class="w-chat"></aside>
+      </main>
+      <section id="content" class="page-content w-content"></section>
+      <section id="register" class="w-register"></section>
+    </div>
+    <script src="/i18n.js" defer></script>
+    <script src="/form.js" defer></script>
+    <script src="/vendor/hls.min.js" defer></script>
+    <script src="/watch.js" defer></script>
+  </body>
+</html>

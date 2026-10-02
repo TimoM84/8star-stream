@@ -1,0 +1,53 @@
+# 8star Stream — Compose stack for Dockhand ("From Git") or docker compose.
+#
+# The image is built from the repository checkout this file is in, so a
+# Dockhand Git stack (repository + branch or tag + compose.yaml) builds and
+# deploys in one step. The data volume has a fixed name, so the existing data
+# is used whatever the stack is called. Never remove this volume when removing
+# the stack.
+services:
+  8star-stream:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: 8star-stream:latest
+    restart: unless-stopped
+    ports:
+      - "9877:3000"
+    environment:
+      PORT: "3000"
+      DATA_DIR: /data
+      # First start only: the first platform administrator.
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@example.com}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      PLATFORM_NAME: ${PLATFORM_NAME:-NFGD}
+      # Public address used in watch links and embed codes, e.g.
+      # https://live.example.com (empty: taken from the request).
+      PUBLIC_URL: ${PUBLIC_URL:-}
+      TRUST_PROXY: ${TRUST_PROXY:-true}
+      COOKIE_SECURE: ${COOKIE_SECURE:-auto}
+      # Sites that may embed the watch page; * = everywhere.
+      FRAME_ANCESTORS: "${FRAME_ANCESTORS:-*}"
+      # How often stream routes on air are checked for a signal (seconds).
+      PROBE_SECONDS: ${PROBE_SECONDS:-10}
+      MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-10}
+      TZ: ${TZ:-Europe/Amsterdam}
+    volumes:
+      - 8star_stream_data:/data
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    stop_grace_period: 15s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  8star_stream_data:
+    name: 8star_stream_data

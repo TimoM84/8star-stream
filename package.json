@@ -1,0 +1,22 @@
+{
+  "name": "8star-stream",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Livestream platform: permanent watch link, languages, primary and backup streams, Green Room, watch page editor, registration and usage",
+  "license": "UNLICENSED",
+  "author": "Timo Manders",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --disable-warning=ExperimentalWarning --test --test-concurrency=1 \"test/*.test.js\"",
+    "check:i18n": "node scripts/check-i18n.js",
+    "postinstall": "node scripts/vendor.js"
+  },
+  "engines": {
+    "node": ">=22.13"
+  },
+  "dependencies": {
+    "hls.js": "^1.7.3",
+    "htmlparser2": "^12.0.0",
+    "sanitize-html": "^2.18.0"
+  }
+}
