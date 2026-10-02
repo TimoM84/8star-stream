@@ -52,7 +52,7 @@ const problemTexts = [
 for (const k of problemTexts) admin.add(k);
 
 // Watch texts (viewer).
-const watch = new Set([...calls(read("public/watch.js")), ...calls(read("public/form.js"))]);
+const watch = new Set([...calls(read("public/watch.js")), ...calls(read("public/form.js")), ...calls(read("public/player.js"))]);
 for (const k of failMessages(read("src/watch.js"))) watch.add(k);
 for (const m of read("src/forms.js").matchAll(/errors\[f\.id\]\s*=\s*(?:f\.type === "consent" \? "([^"]+)" : )?"([^"]+)"/g)) {
   if (m[1]) watch.add(m[1]);

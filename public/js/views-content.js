@@ -425,6 +425,40 @@ EventTabs.vod = async (body, ctx) => {
         ),
       );
     (v.chapters || []).forEach(addChapter);
+    // Subtitle tracks: language code, label and a WebVTT or SRT file. A saved
+    // track keeps its text until a new file is chosen.
+    const subtitles = h("div.subtitles");
+    const srtToVtt = (text) => {
+      const body = text.replace(/^\uFEFF/, "").replace(/\r/g, "");
+      if (/^WEBVTT/.test(body)) return body;
+      return "WEBVTT\n\n" + body.replace(/(\d{2}:\d{2}:\d{2}),(\d{3})/g, "$1.$2");
+    };
+    const addSubtitle = (x = { lang: "", label: "" }) => {
+      const status = h("span.muted.small", x.size ? t("Saved") + " · " + Math.max(1, Math.round(x.size / 1024)) + " kB" : t("No file chosen"));
+      const row = h("div.chapter-row", { "data-id": x.id || "" });
+      row._vtt = undefined;
+      const file = h("input", { type: "file", accept: ".vtt,.srt,text/vtt", hidden: true, onchange: async (e) => {
+        const f = e.target.files[0];
+        if (!f) return;
+        if (f.size > 400000) return toast(t("The subtitle file is too long."), "error");
+        try {
+          row._vtt = srtToVtt(await f.text());
+          status.textContent = f.name;
+        } catch {
+          toast(t("The file could not be read."), "error");
+        }
+      } });
+      add(row,
+        input("slang", x.lang, { placeholder: "nl", "aria-label": t("Language code"), class: "short" }),
+        input("slabel", x.label, { placeholder: t("Shown to viewers, e.g. Nederlands"), "aria-label": t("Shown to viewers, e.g. Nederlands") }),
+        h("button.secondary", { type: "button", onclick: () => file.click() }, t("Choose file")),
+        status,
+        file,
+        h("button.link.danger", { type: "button", "aria-label": t("Remove subtitles"), onclick: () => row.remove() }, "×"),
+      );
+      add(subtitles, row);
+    };
+    (v.subtitles || []).forEach(addSubtitle);
     const parseTime = (s) => {
       if (!String(s).trim()) return null;
       const parts = String(s).trim().split(":").map(Number);
@@ -463,6 +497,7 @@ EventTabs.vod = async (body, ctx) => {
               trimStart: parseTime(d.trimStart),
               trimEnd: parseTime(d.trimEnd),
               chapters: list,
+              subtitles: [...subtitles.querySelectorAll(".chapter-row")].map((r) => ({ id: r.dataset.id || undefined, lang: r.querySelector("[name=slang]").value, label: r.querySelector("[name=slabel]").value, vtt: r._vtt })),
               publishAt: fromLocalInput(d.publishAt),
               expireAt: d.unlimited ? null : fromLocalInput(d.expireAt),
               unlimited: d.unlimited,
@@ -521,6 +556,10 @@ EventTabs.vod = async (body, ctx) => {
         h("button.secondary", { type: "button", onclick: () => addChapter() }, t("Add chapter")),
         h("button.secondary", { type: "button", onclick: () => addChapter({ title: "", time: hms(video.currentTime) }) }, t("Add chapter at player position")),
       ),
+      h("h4", t("Subtitles")),
+      h("p.muted.small", t("Subtitle files (WebVTT or SRT) appear in the player of this recording. Add one track per language.")),
+      subtitles,
+      h("div.actions", h("button.secondary", { type: "button", onclick: () => addSubtitle() }, t("Add subtitles"))),
       h("h4", t("Availability")),
       h("div.grid2", field(t("Publication date (optional)"), input("publishAt", toLocalInput(v.publishAt), { type: "datetime-local" })), expire),
       unlimited,

@@ -83,13 +83,33 @@ test("a test stream is never given to viewers; live gives the active route", asy
   const noExpiry = await admin.put(`/api/admin/sessions/${sess}/languages/${nl}/vod`, { url: "https://v.test/rec.mp4", chapters: [{ title: "Start", time: "1:05" }] });
   assert.equal(noExpiry.status, 200);
   assert.equal((await admin.post(`/api/admin/sessions/${sess}/languages/${nl}/vod/publish`, { published: true })).status, 400);
-  await admin.put(`/api/admin/sessions/${sess}/languages/${nl}/vod`, { url: "https://v.test/rec.mp4", unlimited: true, unlimitedReason: "Archief", trimStart: 5, chapters: [{ title: "Start", time: "1:05" }] });
+  await admin.put(`/api/admin/sessions/${sess}/languages/${nl}/vod`, { url: "https://v.test/rec.mp4", unlimited: true, unlimitedReason: "Archief", trimStart: 5, chapters: [{ title: "Start", time: "1:05" }], subtitles: [{ lang: "en", label: "English", vtt: "WEBVTT\n\n00:00:01.000 --> 00:00:02.000\nHello" }] });
   assert.equal((await admin.post(`/api/admin/sessions/${sess}/languages/${nl}/vod/publish`, { published: true })).status, 200);
   t.app.clearWatchCache();
   s = await state(viewer, "?lang=nl&x=6");
   assert.equal(s.phase, "vod");
   assert.deepEqual(s.vod.chapters, [{ title: "Start", time: 65 }]);
   assert.equal(s.vod.trimStart, 5);
+  // Subtitles: listed for viewers without their text, text served separately.
+  assert.equal(s.vod.subtitles.length, 1);
+  assert.equal(s.vod.subtitles[0].vtt, undefined);
+  const sub = await viewer.get(s.vod.subtitles[0].url);
+  assert.equal(sub.status, 200);
+  assert.match(sub.headers.get("content-type"), /text\/vtt/);
+  assert.match(sub.data.toString(), /Hello/);
+  assert.equal((await viewer.get(s.vod.subtitles[0].url.replace(/id=.*/, "id=nope"))).status, 404);
+  const track = (await admin.get("/api/admin/events/" + ev.event.id)).data.variants.find((v) => v.sessionId === sess && v.languageId === nl).vod.subtitles[0];
+  assert.equal(track.vtt, undefined);
+  assert.ok(track.size > 10);
+  // Changing only the label keeps the text; bad input is refused.
+  const vodUrl = `/api/admin/sessions/${sess}/languages/${nl}/vod`;
+  const keep = { url: "https://v.test/rec.mp4", unlimited: true, unlimitedReason: "Archief", trimStart: 5 };
+  assert.equal((await admin.put(vodUrl, { ...keep, subtitles: [{ id: track.id, lang: "en", label: "Engels" }] })).status, 200);
+  t.app.clearWatchCache();
+  assert.match((await viewer.get(s.vod.subtitles[0].url)).data.toString(), /Hello/);
+  assert.equal((await admin.put(vodUrl, { ...keep, subtitles: [{ lang: "en", label: "x", vtt: "not vtt" }] })).status, 400);
+  assert.equal((await admin.put(vodUrl, { ...keep, subtitles: [{ lang: "English!", label: "x", vtt: "WEBVTT\n" }] })).status, 400);
+  assert.equal((await admin.put(vodUrl, { ...keep, subtitles: [{ lang: "en", label: "x" }] })).status, 400);
   // A changed recording must be approved again.
   const changed = (await admin.put(`/api/admin/sessions/${sess}/languages/${nl}/vod`, { url: "https://v.test/rec2.mp4", unlimited: true, unlimitedReason: "Archief" })).data;
   assert.equal(changed.variants.find((v) => v.sessionId === sess && v.languageId === nl).vod.published, false);

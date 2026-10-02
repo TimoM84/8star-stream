@@ -30,7 +30,8 @@
   const local = store("localStorage"),
     session = store("sessionStorage");
   const accessKey = "8ss-access-" + slug,
-    langKey = "8ss-lang-" + slug;
+    langKey = "8ss-lang-" + slug,
+    captionKey = "8ss-caption-" + slug;
   let accessToken = local.get(accessKey) || "";
   let viewerId = session.get("8ss-viewer");
   if (!viewerId) {
@@ -87,7 +88,27 @@
   }
 
   // ---- Player -----------------------------------------------------------------
-  const video = h("video", { id: "video", controls: true, playsinline: true, preload: "auto" });
+  const video = h("video", { id: "video", playsinline: true, preload: "auto" });
+  // One frame for all videos: the controls stay attached and full screen
+  // survives a change of language.
+  const frame = h("div", { class: "w-player" }, video, h("div", { id: "overlay", class: "w-overlay", hidden: true, role: "status" }));
+  let controls = null;
+  const setup = () => {
+    if (controls) return;
+    controls = window.Player.attach(frame, video, {
+      t,
+      kind: () => (current.kind === "live" ? "live" : "vod"),
+      trim: () => trim,
+      hls: () => hls,
+      languages: () => st?.languages || [],
+      language: () => st?.language || "",
+      setLanguage: (code) => switchLanguage(code),
+      subtitles: () => (current.kind === "vod" ? st?.vod?.subtitles || [] : []),
+      headers: () => (accessToken ? { "x-access": accessToken } : {}),
+      rememberedCaption: () => local.get(captionKey) || "",
+      rememberCaption: (v) => local.set(captionKey, v),
+    });
+  };
   let current = { url: "", kind: "" };
   let hls = null;
   let trim = { start: null, end: null };
@@ -107,7 +128,10 @@
   }
   function play(url, kind, opts = {}, force = false) {
     if (!force && current.url === url && current.kind === kind) return;
+    const changed = current.url !== url || current.kind !== kind;
     current = { url, kind };
+    setup();
+    if (changed) controls.sourceChanged();
     if (hls) {
       hls.destroy();
       hls = null;
@@ -141,6 +165,7 @@
         }, 4000);
       });
       hls.on(window.Hls.Events.FRAG_LOADED, () => clearOverlay());
+      for (const ev of ["MANIFEST_PARSED", "LEVELS_UPDATED", "SUBTITLE_TRACKS_UPDATED"]) hls.on(window.Hls.Events[ev], () => controls?.update());
       hls.loadSource(url);
       hls.attachMedia(video);
     } else {
@@ -278,7 +303,13 @@
     const key = [s.phase, s.access.granted, s.access.status, s.stream?.url, s.vod?.url, s.media?.url, s.streamUnavailable, s.session, s.language].join("|");
     if (key === lastStage) return;
     lastStage = key;
-    const frame = h("div", { class: "w-player" }, video, h("div", { id: "overlay", class: "w-overlay", hidden: true, role: "status" }));
+    // Shows the persistent player frame without detaching it when it is
+    // already on stage (a detached element leaves full screen).
+    const showFrame = () => {
+      if (stage.firstChild !== frame || stage.childNodes.length !== 1) add(clear(stage), frame);
+      setup();
+      controls.update();
+    };
     if (!s.access.granted) {
       play("", "");
       add(clear(stage), placeholder(), accessPanel());
@@ -286,7 +317,7 @@
     }
     if (s.phase === "live") {
       if (s.stream) {
-        add(clear(stage), frame);
+        showFrame();
         play(s.stream.url, "live", { autoplay: true });
         if (s.stream.signal === "lost") setOverlay(t("The broadcast will be back in a moment…"));
       } else {
@@ -304,13 +335,13 @@
       return;
     }
     if (s.phase === "vod" && s.vod?.url) {
-      add(clear(stage), frame);
+      showFrame();
       play(s.vod.url, "vod", { trimStart: s.vod.trimStart, trimEnd: s.vod.trimEnd, autoplay: false });
       return;
     }
     // Pre or after: image, video or waiting screen.
     if (s.media?.kind === "video") {
-      add(clear(stage), frame);
+      showFrame();
       play(s.media.url, "media", { loop: s.media.loop, poster: s.media.poster, autoplay: false });
     } else {
       play("", "");

@@ -10,6 +10,7 @@ const { check, clean: cleanHtml } = require("../sanitize");
 const { PHASES } = require("../phase");
 
 const MAX_HTML = 200_000;
+const MAX_VTT = 400_000;
 const IMAGE_TYPES = {
   "image/png": { ext: "png", magic: (b) => b.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) },
   "image/jpeg": { ext: "jpg", magic: (b) => b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff },
@@ -295,6 +296,29 @@ module.exports = (r, app) => {
   );
 
   // ---- VOD per session and language --------------------------------------
+  // Subtitle tracks: WebVTT text per language code, stored with the VOD. An
+  // existing track keeps its text when only the label or code changes.
+  const subtitlesIn = (list, before) => {
+    if (list === undefined) return before || [];
+    if (!Array.isArray(list)) fail(400, "Invalid request.");
+    if (list.length > 12) fail(400, "A recording can have at most 12 subtitle tracks.");
+    const old = new Map((before || []).map((x) => [x.id, x]));
+    const seen = new Set();
+    return list.map((x) => {
+      const lang = String(x.lang || "").trim().toLowerCase();
+      if (!/^[a-z]{2,3}(-[a-z0-9]{2,8})?$/.test(lang)) fail(400, "Enter a language code such as nl or en.");
+      const label = cleanLine(x.label, 60) || lang;
+      const prev = old.get(String(x.id || ""));
+      let vtt = typeof x.vtt === "string" ? x.vtt.replace(/^\uFEFF/, "") : prev?.vtt;
+      if (!vtt) fail(400, "Add a subtitle file for every track.");
+      if (Buffer.byteLength(vtt) > MAX_VTT) fail(413, "The subtitle file is too long.");
+      if (!/^WEBVTT(\s|$)/.test(vtt)) fail(400, "The subtitle file must be WebVTT or SRT.");
+      const tid = prev ? prev.id : id();
+      if (seen.has(tid)) fail(400, "Invalid request.");
+      seen.add(tid);
+      return { id: tid, lang, label, vtt };
+    });
+  };
   r.put(
     "/api/admin/sessions/:sid/languages/:lid/vod",
     (ctx) => {
@@ -315,6 +339,7 @@ module.exports = (r, app) => {
         trimStart: seconds(b.trimStart),
         trimEnd: seconds(b.trimEnd),
         chapters,
+        subtitles: subtitlesIn(b.subtitles, before.subtitles),
         publishAt: dateOrNull(b.publishAt),
         expireAt: dateOrNull(b.expireAt),
         unlimited: Boolean(b.unlimited),
@@ -337,6 +362,8 @@ module.exports = (r, app) => {
       for (const k of ["url", "trimStart", "trimEnd", "publishAt", "expireAt", "unlimited", "unlimitedReason", "published"])
         if (JSON.stringify(before[k] ?? null) !== JSON.stringify(vod[k] ?? null)) changed[k] = [before[k] ?? null, vod[k]];
       if (JSON.stringify(before.chapters || []) !== JSON.stringify(chapters)) changed.chapters = [(before.chapters || []).length, chapters.length];
+      if (JSON.stringify(before.subtitles || []) !== JSON.stringify(vod.subtitles))
+        changed.subtitles = [(before.subtitles || []).map((x) => x.lang), vod.subtitles.map((x) => x.lang)];
       load.audit(ctx.user, e.tenant_id, "vod.update", s.id, { language: l.code, ...changed });
       return app.bundle(ctx, e);
     },

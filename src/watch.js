@@ -155,7 +155,14 @@ module.exports = (r, app) => {
       }
       if (phase === "vod") {
         const vod = json(v.vod, {});
-        out.vod = { url: vod.url, trimStart: vod.trimStart ?? null, trimEnd: vod.trimEnd ?? null, chapters: vod.chapters || [] };
+        const sub = "/api/watch/" + e.slug + "/subtitle?" + new URLSearchParams({ session: s.id, lang: lang.code }) + "&id=";
+        out.vod = {
+          url: vod.url,
+          trimStart: vod.trimStart ?? null,
+          trimEnd: vod.trimEnd ?? null,
+          chapters: vod.chapters || [],
+          subtitles: (vod.subtitles || []).map((x) => ({ id: x.id, lang: x.lang, label: x.label, url: sub + x.id })),
+        };
       }
     }
     if (!acc.granted && v) {
@@ -211,6 +218,23 @@ module.exports = (r, app) => {
       ctx.res.setHeader("vary", "x-access");
       ctx.res.writeHead(200, { "content-type": "application/json; charset=utf-8" });
       ctx.res.end(JSON.stringify(out));
+    },
+    { auth: false },
+  );
+
+  // Subtitle text of a published recording (WebVTT), for viewers with access.
+  r.get(
+    "/api/watch/:slug/subtitle",
+    (ctx) => {
+      const st = state(ctx.req, ctx.params.slug, new URLSearchParams({ lang: ctx.query.get("lang") || "", session: ctx.query.get("session") || "" }), null);
+      if (!st.access.granted || st.phase !== "vod") fail(404, "This event does not exist.");
+      const e = eventBySlug.get(ctx.params.slug);
+      const l = db.prepare("SELECT id FROM languages WHERE event_id = ? AND code = ?").get(e.id, st.language);
+      const v = l && st.session ? db.prepare("SELECT vod FROM variants WHERE session_id = ? AND language_id = ?").get(st.session, l.id) : null;
+      const track = json(v?.vod, {}).subtitles?.find((x) => x.id === ctx.query.get("id"));
+      if (!track) fail(404, "This event does not exist.");
+      ctx.res.writeHead(200, { "content-type": "text/vtt; charset=utf-8", "cache-control": "private, max-age=300", "x-content-type-options": "nosniff" });
+      ctx.res.end(track.vtt);
     },
     { auth: false },
   );

@@ -16,12 +16,13 @@ Built with Node.js. No external database: everything is stored in one Docker vol
 - **Languages**: per language its own streams, media, page texts, form texts and VOD; the viewer switches without reloading (`?lang=en` for a direct link); new languages can be copied from an existing one
 - **Primary and backup route** per session and language, each with its own encoder and provider; manual switch with confirmation and reason, logged, reaching viewers within seconds
 - **Signal monitoring** of every route on air (HLS playlist must keep advancing), with a visible and audible alarm in live control and a signal list on the dashboard; the viewer's player shows "back in a moment" and restarts by itself when the signal returns
+- **Player**: own controls with LIVE badge and "go to live", seek bar for recordings, volume, speed, full screen, **language choice inside the player** and **subtitles**; works with keyboard and touch
 - **Green Room**: play any route of any session and language with picture and sound, never visible to viewers
 - **Watch page editor**: visual editor and HTML source, images from the media library (alt text, size, alignment), buttons, variables such as `{{event}}` and `{{watchUrl}}`, draft and publish per phase and language, desktop and mobile preview, templates (central and per reseller), branding per customer and event
 - **Safe HTML**: scripts, event handlers, unsafe links and iframes from unapproved sources are refused with a readable message
 - **Registration**: form builder with 11 field types, required/optional, active/inactive, order, answer options, texts per language; collect sign-ups, give access directly, or approve by hand; consent recorded with the exact text and time; search, filter and CSV/Excel export; old registrations stay readable when the form changes
 - **Access**: public, access code, or registration
-- **After live and VOD**: media per phase and language, VOD by URL with start and end point (original kept), chapters, publication and expiry date or unlimited with a reason
+- **After live and VOD**: media per phase and language, VOD by URL with start and end point (original kept), chapters, subtitle tracks (WebVTT or SRT, one per language, up to 12), publication and expiry date or unlimited with a reason
 - **Usage**: live minutes, language stream minutes and test minutes per event, session, language and route; estimated GB (viewers × bitrate); concurrent and peak viewers, plays; CSV/Excel export with a clear, editable file name
 - **Resellers**: separate environments; a reseller only sees its own customers, users, events, registrations, media, templates, reports and audit log
 - **Roles**: administrator, technician, content manager
@@ -120,6 +121,8 @@ Every route has a **playback URL (HLS `.m3u8`)** that viewers play, and ingest d
 
 The platform checks the playlist of every route that is on air (from three hours before the start until one hour after the end, during *Test*, and while a session is set to live by hand). A route has a **signal** while new segments keep appearing; it is **lost** when the playlist cannot be loaded, has ended, or has not advanced for three segment durations (at least 20 seconds).
 
+**MediaMTX tip:** for the smoothest playback through a reverse proxy use plain HLS instead of low-latency HLS: set `MTX_HLSVARIANT=fmp4`, `MTX_HLSSEGMENTDURATION=2s` and `MTX_HLSSEGMENTCOUNT=7` as environment variables of the MediaMTX container, and let the encoder use a 2 second keyframe interval. Delay is then about 6 to 8 seconds.
+
 Viewers' browsers load the stream directly from the provider (not through this server). The stream's playback URL is only handed out while the session is publicly live and the viewer has access; during *Test* it is never handed out. A playback URL that someone already knows is not secret, though: protect it at the provider (token authentication) if that matters.
 
 ### Phases
@@ -164,7 +167,7 @@ These parts of the requirements are planned for following versions:
 - Trimming that produces a new video file (now: start and end point applied by the player), uploading video files
 - Waiting list, maximum number of registrations, conditional fields, registration per session
 - Retention periods with automatic clean-up, recording consent log
-- Own domains per reseller, subtitles, polls
+- Live subtitles (needs a caption source; the player already shows subtitle tracks that an HLS stream contains), own domains per reseller, polls
 
 ## Development
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.0 — new player
+
+- Own player controls: LIVE badge and "go to live", seek bar, volume, speed, quality (when the stream has several), full screen, keyboard and touch
+- Language choice inside the player; the player stays in full screen when the language changes
+- Subtitles for recordings: WebVTT or SRT per language (up to 12 tracks), uploaded in the admin and shown by the player; the viewer's choice is remembered
+- Subtitle tracks that an HLS stream contains are listed too (not tested with a real stream)
+
 ## 0.1.0 — first version ("core first")
 
 First version of the livestream platform, built from the NFGD requirements (Streaming Manager, version 1.0). Covers the core of priority 1:

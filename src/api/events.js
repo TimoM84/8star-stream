@@ -66,13 +66,15 @@ module.exports = (r, app) => {
     sort: s.sort,
   });
   const languageOut = (l) => ({ id: l.id, code: l.code, name: l.name, isDefault: Boolean(l.is_default), active: Boolean(l.active), sort: l.sort });
+  // The admin gets the subtitle tracks without their text.
+  const vodOut = (vod) => ({ ...vod, subtitles: (vod.subtitles || []).map((x) => ({ id: x.id, lang: x.lang, label: x.label, size: Buffer.byteLength(x.vtt || "") })) });
   const variantOut = (v, s, e) => ({
     sessionId: v.session_id,
     languageId: v.language_id,
     activeSlot: v.active_slot,
     preMedia: json(v.pre_media, {}),
     afterMedia: json(v.after_media, {}),
-    vod: json(v.vod, {}),
+    vod: vodOut(json(v.vod, {})),
     vodAvailable: vodAvailable(v.vod),
     phase: s ? publicPhase(s, e, v) : null,
   });
